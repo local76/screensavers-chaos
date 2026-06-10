@@ -10,7 +10,6 @@ use library::core::logo_block::render_logo_block;
 use library::platform::native::sys_info::get_system_info;
 
 
-use library::toolkit::sys_info::query_current_palette;
 
 mod types;
 mod physics;
@@ -35,7 +34,7 @@ pub struct Chaos {
     pub(crate) mem_pressure: f32,
     pub(crate) cpu_load: f32,
     pub(crate) host_bias: f32,
-    pub(crate) last_phase: Option<Phase>,
+
     pub(crate) time_elapsed: f32,
 }
 
@@ -69,7 +68,7 @@ impl Chaos {
             mem_pressure: sys.mem_used_pct / 100.0,
             cpu_load: 0.4,
             host_bias,
-            last_phase: None,
+
             time_elapsed: 0.0,
         }
     }
