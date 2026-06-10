@@ -1,0 +1,50 @@
+[package]
+name = "chaos"
+version = "2026.7.0"
+edition = "2021"
+description = "chaos - retro terminal screensaver effect"
+autobins = false
+
+[[bin]]
+name = "chaos"
+path = "src/main.rs"
+
+[dependencies]
+library = { git = "https://github.com/local76/library.git", branch = "main", default-features = false, features = ["scenes", "screensaver-runtime", "role-application", "lifecycle-foreground", "platform-native"] }
+
+[build-dependencies]
+winres = "0.1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[package.metadata.deb]
+name = "scene-chaos"
+maintainer = "Screensavers Developer <dev@local76.org>"
+extended-description = "Screensaver effect (chaos) part of the screensavers collection."
+depends = "libc6, xterm"
+section = "utils"
+priority = "optional"
+assets = [
+    ["target/release/chaos", "usr/libexec/screensaver-shims/chaos", "755"],
+    ["assets/scene-chaos.desktop", "usr/share/applications/scene-chaos.desktop", "644"],
+    ["assets/scene-chaos.xml", "usr/share/xscreensaver/config/scene-chaos.xml", "644"]
+]
+
+[package.metadata.generate-rpm]
+name = "scene-chaos"
+version = "2026.7.0"
+release = "1"
+arch = "x86_64"
+summary = "chaos - retro terminal screensaver effect"
+description = "Screensaver effect (chaos) part of the screensavers collection."
+license = "MIT"
+assets = [
+    { source = "target/release/chaos", dest = "/usr/libexec/screensaver-shims/chaos", mode = "755" },
+    { source = "assets/scene-chaos.desktop", dest = "/usr/share/applications/scene-chaos.desktop", mode = "644" },
+    { source = "assets/scene-chaos.xml", dest = "/usr/share/xscreensaver/config/scene-chaos.xml", mode = "644" }
+]
