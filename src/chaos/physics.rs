@@ -390,15 +390,13 @@ impl Chaos {
             0
         };
 
+        let inv_max_possible_dist = 1.0 / max_possible_dist;
+
         for p in &self.particles {
             let px = p.x.round() as i32;
             let py = p.y.round() as i32;
 
             if px >= 0 && px < cols as i32 && py >= 0 && py < rows as i32 {
-                let dx = p.x - center_x;
-                let dy = p.y - center_y;
-                let dist = (dx*dx + dy*dy).sqrt();
-
                 let color = if self.phase == Phase::Assembled {
                     let glow_factor = p.glow.min(1.5);
                     if glow_factor > 1.0 {
@@ -414,7 +412,10 @@ impl Chaos {
                         (r, g, b)
                     }
                 } else {
-                    let ratio = (dist / max_possible_dist).min(1.0);
+                    let dx = p.x - center_x;
+                    let dy = p.y - center_y;
+                    let dist = (dx*dx + dy*dy).sqrt();
+                    let ratio = (dist * inv_max_possible_dist).min(1.0);
                     let r = (255.0 * ratio + (accent.0 as f32) * (1.0 - ratio)) as u8;
                     let g = (110.0 * ratio + (accent.1 as f32) * (1.0 - ratio)) as u8;
                     let b = ((accent.2 as f32) * (1.0 - ratio)) as u8;
