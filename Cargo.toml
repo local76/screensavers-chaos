@@ -31,9 +31,10 @@ depends = "libc6, xterm"
 section = "utils"
 priority = "optional"
 assets = [
-    ["target/release/chaos", "usr/libexec/screensaver-shims/chaos", "755"],
-    ["assets/scene-chaos.desktop", "usr/share/applications/scene-chaos.desktop", "644"],
-    ["assets/scene-chaos.xml", "usr/share/xscreensaver/config/scene-chaos.xml", "644"]
+    ["target/release/chaos", "usr/libexec/local76/screensavers/chaos", "755"],
+    ["assets/local76-chaos.desktop", "usr/share/applications/local76-chaos.desktop", "644"],
+    ["assets/local76-chaos.xml", "usr/share/xscreensaver/config/local76-chaos.xml", "644"],
+    ["assets/local76-chaos.png", "usr/share/pixmaps/local76-chaos.png", "644"]
 ]
 
 [package.metadata.generate-rpm]
@@ -45,9 +46,10 @@ summary = "chaos - retro terminal screensaver effect"
 description = "Screensaver effect (chaos) part of the screensavers collection."
 license = "MIT"
 assets = [
-    { source = "target/release/chaos", dest = "/usr/libexec/screensaver-shims/chaos", mode = "755" },
-    { source = "assets/scene-chaos.desktop", dest = "/usr/share/applications/scene-chaos.desktop", mode = "644" },
-    { source = "assets/scene-chaos.xml", dest = "/usr/share/xscreensaver/config/scene-chaos.xml", mode = "644" }
+    { source = "target/release/chaos", dest = "/usr/libexec/local76/screensavers/chaos", mode = "755" },
+    { source = "assets/local76-chaos.desktop", dest = "/usr/share/applications/local76-chaos.desktop", mode = "644" },
+    { source = "assets/local76-chaos.xml", dest = "/usr/share/xscreensaver/config/local76-chaos.xml", mode = "644" },
+    { source = "assets/local76-chaos.png", dest = "/usr/share/pixmaps/local76-chaos.png", mode = "644" }
 ]
 [patch."https://github.com/local76/library.git"]
 library = { path = "../library" }

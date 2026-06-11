@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<screensaver name="scene-chaos" _label="chaos - retro terminal screensaver effect">
-  <command arg="-fullscreen -bg black -fg white -e /usr/libexec/screensaver-shims/chaos"/>
-  <_description>
-    Retro terminal screensaver effect (chaos) from the screensavers collection.
-  </_description>
-</screensaver>

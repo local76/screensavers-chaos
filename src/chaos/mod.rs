@@ -1,4 +1,4 @@
-﻿//! Consolidated chaos screensaver effect module.
+//! Consolidated chaos screensaver effect module.
 //!
 //! **Taxonomy Classification**: System Role (Purpose - Application Software).
 
@@ -33,7 +33,11 @@ pub struct Chaos {
     pub(crate) sys_refresh_timer: f32,
     pub(crate) mem_pressure: f32,
     pub(crate) cpu_load: f32,
-    pub(crate) host_bias: f32,
+    pub(crate) _host_bias: f32,
+    pub(super) on_battery: bool,
+    pub(super) frame_time_ema: f32,
+    pub(super) quality_scale: f32,
+    pub(super) target_frame_time: f32,
 
     pub(crate) time_elapsed: f32,
 }
@@ -51,6 +55,7 @@ impl Chaos {
 
         let sys = get_system_info();
         let host_bias = sys.hostname.chars().map(|c| c as u32).sum::<u32>() as f32 / 1000.0 % 1.0;
+        let on_battery = sys.power_status.contains("Battery");
 
         Self {
             rng: LcgRng::new(8888),
@@ -66,8 +71,12 @@ impl Chaos {
             explosion_freq_opt,
             sys_refresh_timer: 0.0,
             mem_pressure: sys.mem_used_pct / 100.0,
-            cpu_load: 0.4,
-            host_bias,
+            cpu_load: (sys.cpu_usage_pct / 100.0).clamp(0.0, 1.0),
+            _host_bias: host_bias,
+            on_battery,
+            frame_time_ema: 0.01666667,
+            quality_scale: 1.0,
+            target_frame_time: 0.01666667,
 
             time_elapsed: 0.0,
         }
@@ -271,18 +280,40 @@ impl Chaos {
 
 impl Screensaver for Chaos {
     fn update(&mut self, dt: Duration, cols: usize, rows: usize) {
-        let delta = dt.as_secs_f32();
+        let dt_secs = dt.as_secs_f32();
+
+        // Auto-detect high refresh rates during the startup phase
+        if self.time_elapsed < 2.0 && dt_secs > 0.001 {
+            if dt_secs < self.target_frame_time - 0.001 {
+                self.target_frame_time = dt_secs;
+            }
+        }
+
+        // Exponential moving average for frame time (alpha = 0.1)
+        self.frame_time_ema = self.frame_time_ema * 0.9 + dt_secs.min(0.2) * 0.1;
+
+        let speed_mult = if self.on_battery { 0.65 } else { 1.0 };
+        let delta = dt_secs * speed_mult;
         self.phase_timer += delta;
         self.time_elapsed += delta;
 
+        // Adjust quality_scale based on frame time performance vs target
+        if self.time_elapsed > 1.5 {
+            if self.frame_time_ema > self.target_frame_time * 1.15 {
+                self.quality_scale = (self.quality_scale - 0.15 * delta).max(0.20);
+            } else if self.frame_time_ema < self.target_frame_time * 1.05 {
+                self.quality_scale = (self.quality_scale + 0.04 * delta).min(1.0);
+            }
+        }
+
         // OpenRGB unstable phase-based updates
-// Live: high system load = more chaos/explosions, host_bias unique instability
+        // Live: high system load = more chaos/explosions, host_bias unique instability
         self.sys_refresh_timer += delta;
         if self.sys_refresh_timer >= 1.0 {
             let sys = get_system_info();
             self.mem_pressure = sys.mem_used_pct / 100.0;
-            self.cpu_load = (self.mem_pressure * 0.6 + 0.3).min(0.9);
-            if self.host_bias > 0.6 { self.cpu_load = (self.cpu_load + 0.1).min(0.98); }
+            self.cpu_load = (sys.cpu_usage_pct / 100.0).clamp(0.0, 1.0);
+            self.on_battery = sys.power_status.contains("Battery");
             self.sys_refresh_timer = 0.0;
         }
 
@@ -300,7 +331,18 @@ impl Screensaver for Chaos {
             for (r_offset, line) in lines.iter().enumerate().take(logo_h) {
                 for (c_offset, ch) in line.chars().enumerate() {
                     if ch != ' ' {
-                        if self.particle_limit_opt == 0 && self.rng.next_bool(0.5) {
+                        let mut skip_chance = 0.0;
+                        if self.on_battery {
+                            skip_chance = 0.45;
+                        }
+                        let scale_pct = self.quality_scale;
+                        if scale_pct < 1.0 {
+                            skip_chance = 1.0 - (1.0 - skip_chance) * scale_pct;
+                        }
+                        if self.particle_limit_opt == 0 {
+                            skip_chance = 1.0 - (1.0 - skip_chance) * 0.5;
+                        }
+                        if skip_chance > 0.0 && self.rng.next_bool(skip_chance) {
                             continue;
                         }
                         let hx = (logo_x + c_offset) as f32;
@@ -321,22 +363,26 @@ impl Screensaver for Chaos {
                 }
             }
 
-            // Create background stars
-            let target_stars = (cols * rows / 16).clamp(20, 100);
-            for i in 0..target_stars {
-                self.stars.push(Star {
-                    x: self.rng.next_f32(),
-                    y: self.rng.next_f32(),
-                    phase: self.rng.next_f32() * std::f32::consts::TAU,
-                    ch: if i % 8 == 0 { '✦' } else if i % 3 == 0 { '•' } else { '.' },
-                    excitation: 0.0,
-                });
-            }
-
             self.phase = Phase::Assembled;
             self.phase_timer = 0.0;
             self.last_cols = cols;
             self.last_rows = rows;
+        }
+
+        // Dynamically adjust star population to match target capacity
+        let target_stars = (((cols * rows / 16).clamp(20, 100)) as f32 * self.quality_scale * (if self.on_battery { 0.55 } else { 1.0 })) as usize;
+        if self.stars.len() > target_stars {
+            self.stars.truncate(target_stars);
+        } else if self.stars.len() < target_stars && target_stars > 0 {
+            while self.stars.len() < target_stars {
+                self.stars.push(Star {
+                    x: self.rng.next_f32(),
+                    y: self.rng.next_f32(),
+                    phase: self.rng.next_f32() * std::f32::consts::TAU,
+                    ch: if self.stars.len() % 8 == 0 { '✦' } else if self.stars.len() % 3 == 0 { '•' } else { '.' },
+                    excitation: 0.0,
+                });
+            }
         }
 
         // Decay star excitations
