@@ -152,7 +152,7 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 
 [[package]]
 name = "chaos"
-version = "2026.7.0"
+version = "2026.6.10-1"
 dependencies = [
  "embed-resource",
  "library",
@@ -646,14 +646,13 @@ checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
 name = "library"
-version = "2026.6.11"
+version = "2026.6.10-1"
 dependencies = [
  "crossterm",
  "libc",
  "ratatui",
  "rusqlite",
  "sysinfo",
- "windows",
  "windows-sys 0.59.0",
  "winreg 0.56.0",
 ]
