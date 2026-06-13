@@ -10,46 +10,23 @@ name = "chaos"
 path = "src/main.rs"
 
 [dependencies]
-library = { git = "https://github.com/local76/library.git", tag = "v2026.6.10-1", features = ["screensaver-runtime"] }
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_System_Console",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_Gdi",
+    "Win32_Media",
+] }
 
 [build-dependencies]
-library = { git = "https://github.com/local76/library.git", tag = "v2026.6.10-1", features = ["screensaver-runtime"] }
 embed-resource = "2"
-
 [profile.release]
-opt-level = "z"
-lto = true
-codegen-units = 1
-strip = true
-panic = "abort"
-
-[package.metadata.deb]
-name = "scene-chaos"
-maintainer = "Screensavers Developer <dev@local76.org>"
-extended-description = "Screensaver effect (chaos) part of the screensavers collection."
-depends = "libc6, xterm"
-section = "utils"
-priority = "optional"
-assets = [
-    ["target/release/chaos", "usr/libexec/local76/screensavers/chaos", "755"],
-    ["assets/local76-chaos.desktop", "usr/share/applications/local76-chaos.desktop", "644"],
-    ["assets/local76-chaos.xml", "usr/share/xscreensaver/config/local76-chaos.xml", "644"],
-    ["assets/local76-chaos.png", "usr/share/pixmaps/local76-chaos.png", "644"]
-]
-
-[package.metadata.generate-rpm]
-name = "scene-chaos"
-version = "2026.6.10-1"
-release = "1"
-arch = "x86_64"
-summary = "chaos - retro terminal screensaver effect"
-description = "Screensaver effect (chaos) part of the screensavers collection."
-license = "MIT"
-assets = [
-    { source = "target/release/chaos", dest = "/usr/libexec/local76/screensavers/chaos", mode = "755" },
-    { source = "assets/local76-chaos.desktop", dest = "/usr/share/applications/local76-chaos.desktop", mode = "644" },
-    { source = "assets/local76-chaos.xml", dest = "/usr/share/xscreensaver/config/local76-chaos.xml", mode = "644" },
-    { source = "assets/local76-chaos.png", dest = "/usr/share/pixmaps/local76-chaos.png", mode = "644" }
-]
-[patch."https://github.com/local76/library.git"]
-library = { path = "../library" }
+opt-level = "z"          # Optimize for size
+lto = true               # Enable Link Time Optimization
+codegen-units = 1        # Reduce codegen units to maximize size reduction
+panic = "abort"          # Remove panic unwinding code
+strip = true             # Strip symbols and debuginfo
